@@ -2,7 +2,7 @@ import { CopyQuestion } from "@/components/CopyQuestion";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 
-const supabaseUrl = "https://wtvreeonwnukiuzuxmin.supabase.co";
+const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
