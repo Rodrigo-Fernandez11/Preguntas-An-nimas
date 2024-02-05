@@ -23,6 +23,8 @@ export default async function Home() {
     const questions = await supabase
       .from("questions")
       .select()
+      .order("id", { ascending: false })
+      .limit(16)
       .then(({ data }) => data as { id: string; text: string }[]);
     return questions;
   }
