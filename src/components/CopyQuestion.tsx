@@ -1,5 +1,7 @@
 "use client";
 
+import { Toaster, toast } from "sonner";
+
 // Definimos el componente 'CopyQuestion'
 export const CopyQuestion = () => {
   // Definimos una función asíncrona 'handleClick' que se ejecutará cuando se haga clic en el botón
@@ -17,17 +19,20 @@ export const CopyQuestion = () => {
     ]);
 
     // Mostramos una alerta indicando que la imagen ha sido copiada al portapapeles
-    alert("copiado en el portapapeles");
+    toast.success("Copiado en el portapapeles con exito");
   }
 
   // Renderizamos un botón que, al hacer clic, ejecuta la función 'handleClick'
   return (
-    <button
-      className="bg-pink-900 text-white rounded-lg p-4 text-xl transition-colors w-full hover:bg-pink-600"
-      type="button"
-      onClick={handleClick}
-    >
-      Copiar al portapapeles
-    </button>
+    <div>
+      <button
+        className="bg-pink-900 text-white rounded-lg p-4 text-xl transition-colors w-full hover:bg-pink-600"
+        type="button"
+        onClick={handleClick}
+      >
+        Copiar al portapapeles
+      </button>
+      <Toaster position="top-center" />
+    </div>
   );
 };
