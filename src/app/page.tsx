@@ -1,55 +1,67 @@
-// Importamos la función "createClient" de la biblioteca "supabase-js"
 import { createClient } from "@supabase/supabase-js";
-
-// Importamos la función "revalidatePath" de la biblioteca "next/cache"
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-// Definimos la URL de nuestro servidor Supabase
-const supabaseUrl = "https://wtvreeonwnukiuzuxmin.supabase.co";
-
-// Obtenemos la clave de Supabase de las variables de entorno
+// Configuración de Supabase
+const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_KEY!;
 
-// Creamos un nuevo cliente de Supabase con la URL y la clave
-const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error(
+    "Faltan las variables de entorno SUPABASE_URL o SUPABASE_KEY"
+  );
+}
 
-// Exportamos la función principal de la página
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false },
+});
+
 export default async function Home() {
-  // Definimos una función asíncrona para obtener las preguntas de la base de datos
+  // Función para obtener las preguntas de la base de datos
   async function getQuestions() {
-    // Vamos a la tabla "questions" y seleccionamos todo
-    const questions = await supabase
-      .from("questions")
-      .select()
-      .order("id", { ascending: false })
-      .limit(16)
-      .then(({ data }) => data as { id: string; text: string }[]);
-    return questions;
+    try {
+      const { data, error } = await supabase
+        .from("questions")
+        .select()
+        .order("id", { ascending: false })
+        .limit(12);
+
+      if (error) throw error;
+
+      return data as { id: string; text: string }[];
+    } catch (error) {
+      console.error("Error al obtener las preguntas:", error);
+      return [];
+    }
   }
 
-  // Definimos una función asíncrona para manejar el envío del formulario
+  // Función para manejar el envío del formulario
   async function handleSubmit(formData: FormData) {
-    // Usamos el servidor
     "use server";
 
-    // Obtenemos la pregunta del formulario
-    const question = formData.get("question");
+    const question = formData.get("question")?.toString();
+    if (!question) {
+      console.warn("La pregunta está vacía o indefinida.");
+      return;
+    }
+
     const id = Date.now().toString();
+    const { error } = await supabase
+      .from("questions")
+      .insert({ text: question, id });
 
-    // Insertamos la pregunta en la tabla "questions"
-    await supabase.from("questions").insert({ text: question, id });
+    if (error) {
+      console.error("Error al insertar la pregunta:", error);
+      return;
+    }
 
-    // Revalidamos la ruta "/"
     revalidatePath("/");
     redirect(`/${id}`);
   }
 
-  // Obtenemos las preguntas
   const questions = await getQuestions();
 
-  // Retornamos el componente principal de la página
   return (
     <div className="grid gap-8">
       <form className="grid gap-4" action={handleSubmit}>
@@ -72,7 +84,7 @@ export default async function Home() {
       </form>
       <hr className="opacity-30" />
       <article className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {questions.map((question) => (
+        {questions?.map((question) => (
           <Link href={`/${question.id}`} key={question.id} className="grid">
             <p className="bg-pink-900 text-white p-4 rounded-t-lg text-xl font-medium">
               Question

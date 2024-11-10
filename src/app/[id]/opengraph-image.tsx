@@ -1,35 +1,31 @@
-// Importamos las clases y funciones necesarias de los módulos 'next/server' y '@supabase/supabase-js'
-import { ImageResponse } from "next/server";
+import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 
-// Configuramos el segmento de ruta para que se ejecute en el borde (edge) y establecemos el tipo de contenido a 'image/png'
+// Configuración de Supabase
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 export const runtime = "edge";
 export const contentType = "image/png";
 
-// Definimos la URL de Supabase y la clave de Supabase
-const supabaseUrl = "https://wtvreeonwnukiuzuxmin.supabase.co";
-const supabaseKey = process.env.SUPABASE_KEY!;
-// Creamos un nuevo cliente de Supabase con la URL y la clave definidas
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Definimos una función asíncrona para generar la imagen
 export default async function Image({
   params: { id },
 }: {
   params: { id: string };
 }) {
-  // Obtenemos la pregunta de la base de datos de Supabase utilizando el ID proporcionado
-  const question = await supabase
+  // Obtenemos la pregunta de Supabase
+  const { data: question, error } = await supabase
     .from("questions")
     .select()
     .eq("id", id)
-    .single()
-    .then(({ data }) => data as { id: string; text: string });
+    .single();
 
-  // Devolvemos una nueva respuesta de imagen con el JSX y las opciones proporcionadas
+  // Verificamos si `question` es nulo para evitar errores de renderizado
+  const textContent = question?.text || "Pregunta no encontrada";
+
   return new ImageResponse(
     (
-      // Elemento JSX de ImageResponse
       <div
         style={{
           fontSize: 64,
@@ -47,6 +43,7 @@ export default async function Image({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            padding: "20px",
           }}
         >
           <p>Question</p>
@@ -57,13 +54,13 @@ export default async function Image({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            padding: "20px",
           }}
         >
-          {question.text}
+          {textContent}
         </div>
       </div>
     ),
-    // Opciones de ImageResponse
     {
       width: 1200,
       height: 630,
